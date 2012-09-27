@@ -1,7 +1,26 @@
 #!/bin/sh
 # the next line restarts using wish \
-exec wish "$0" ${1+"$@"}
+exec tclsh86 "$0" ${1+"$@"}
 
+###############################################################################
+#Batch convert pdf files to jpg images
+#Copyright (C) 2010  Serban Teodorescu
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+    
+    
 # globals
 global gsBinary
 set gsBinary "C:/Program Files/gs/gs8.70/bin/gswin32c.exe"
@@ -11,7 +30,7 @@ set gsBinary "C:/Program Files/gs/gs8.70/bin/gswin32c.exe"
 # the ghostscript interpreter tends to fail in ways that cannot be handled
 # via catch and we use these globals to log such failures
 global fDebug
-global fExcludeFucked
+global fExcludeBusted
 global debug
 global progress
 global listFiles
@@ -102,7 +121,7 @@ proc execGs myFile {
 
     global gsBinary
     global fDebug
-    global fExcludeFucked
+    global fExcludeBusted
     
     if { [ catch \
 	 { exec -ignorestderr -- $gsBinary \
@@ -118,8 +137,8 @@ proc execGs myFile {
 	 } catchMe ] \
 	} {
 	puts $fDebug "[ file normalize [ file nativename $myFile ] ]: gs error caught $catchMe\?"
-	puts $fExcludeFucked $myFile
-	flush $fExcludeFucked
+	puts $fExcludeBusted $myFile
+	flush $fExcludeBusted
 	
 	return -code ok 0
     } else {
@@ -132,7 +151,7 @@ set searchRootPath "D:/hentai"
 set ext "\*\.pdf"
 
 set fnExcludeConverted "\./converted.log"
-set fnExcludeFucked "\./fucked.log"
+set fnExcludeBusted "\./busted.log"
 
 # Verify and process input
 switch -exact $argc {
@@ -170,7 +189,7 @@ set progress "\."
 set debug 1
 set listFiles [ list ]
 set listExcludeConverted ""
-set listExcludeFucked ""
+set listExcludeBusted ""
 set countErrors 0
 
 searchFilesRecurse $searchRootPath $ext
@@ -191,21 +210,21 @@ if { $debug } {
 	  [ file normalize [ file nativename $fnExcludeConverted ] ] file..."
 }
 
-if { [ file isfile $fnExcludeFucked ] } {      
-    set fExcludeFucked [ open $fnExcludeFucked r ]
-    set content [ read -nonewline $fExcludeFucked ]
-    set listExcludeFucked [ split $content "\n" ]
+if { [ file isfile $fnExcludeBusted ] } {      
+    set fExcludeBusted [ open $fnExcludeBusted r ]
+    set content [ read -nonewline $fExcludeBusted ]
+    set listExcludeBusted [ split $content "\n" ]
     puts "\nINFO: Exclude failed conversion files list in \
-	      [ file normalize [ file nativename $fnExcludeFucked ] ]:\n\t \
+	      [ file normalize [ file nativename $fnExcludeBusted ] ]:\n\t \
 	      Some of these files can be unfucked the cutePDF writer..."
-    close $fExcludeFucked
+    close $fExcludeBusted
 }
 
 if { $debug } {
     puts "\nDEBUG: all the [ regsub -all {\*|\.} $ext {} ] files \
 	  that failed conversion during this session will have their names \
 	  appended to the \
-	  [ file normalize [ file nativename $fnExcludeFucked ] ] file. \
+	  [ file normalize [ file nativename $fnExcludeBusted ] ] file. \
 	  Be sure to remove the ones \
 	  run through cutePDF for another conversion attempt..."
 }
@@ -215,7 +234,7 @@ if { $debug } {
     puts $fDebug "--- Excluded from conversion, already converted ---"
     puts $fDebug [ join $listExcludeConverted \n ]
     puts $fDebug "\n--- Excluded from conversion, fucked-up pdf formatting ---"
-    puts $fDebug [ join $listExcludeFucked \n ]
+    puts $fDebug [ join $listExcludeBusted \n ]
     puts $fDebug "\--- Attempt conversion during this session ---"
     puts $fDebug [ join $listFiles \n ]
     puts $fDebug "\n--- Failures ---"
@@ -238,7 +257,7 @@ if { ![ llength $listFiles ] } {
 }    
 
 set fExcludeConverted [ open $fnExcludeConverted a+ ]
-set fExcludeFucked [ open $fnExcludeFucked a+ ]
+set fExcludeBusted [ open $fnExcludeBusted a+ ]
 		   
 foreach myFile $listFiles {
 
@@ -250,7 +269,7 @@ foreach myFile $listFiles {
 	continue
     }
     
-    if { [ lsearch -exact -sorted -increasing -dictionary $listExcludeFucked $myFile ] ne -1 } {
+    if { [ lsearch -exact -sorted -increasing -dictionary $listExcludeBusted $myFile ] ne -1 } {
 	puts "\nDEBUG: skipping $myFile, conversion failed once already..."
 	puts "INFO: [ incr countSkipped ] files..."
 	puts "INFO: [ incr countRemaining -1 ] files to convert..."
@@ -300,7 +319,7 @@ if { $debug } {
 }
 
 close $fExcludeConverted
-close $fExcludeFucked
+close $fExcludeBusted
 
 puts "\nINFO: done. converted [ expr { [ llength $listFiles ] - $countErrors -$countSkipped } ] \
 	[ regsub -all {\*|\.} $ext {} ] files to jpeg images"
