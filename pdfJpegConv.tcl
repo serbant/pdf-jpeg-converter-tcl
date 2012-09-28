@@ -23,8 +23,12 @@ exec tclsh86 "$0" ${1+"$@"}
     
 # globals
 global gsBinary
-set gsBinary "C:/Program Files/gs/gs8.70/bin/gswin32c.exe"
-#set gsBinary "C:/Program Files (x86)/gs/gs8.64/bin/gswin32.exe"
+if {[string match $tcl_platform(platform) "unix"]} {
+    set gsBinary "/usr/bin/gs"
+}
+if {[string match $tcl_platform(platform) "windows"]} {
+    set gsBinary "C:/Program Files/gs/gs8.70/bin/gswin32c.exe"
+}
 
 # globals that should not be globals but need to be available in execGs
 # the ghostscript interpreter tends to fail in ways that cannot be handled
@@ -151,7 +155,7 @@ set searchRootPath "D:/hentai"
 set ext "\*\.pdf"
 
 set fnExcludeConverted "\./converted.log"
-set fnExcludeBusted "\./busted.log"
+set fnExcludeBusted "\./fucked.log"
 
 # Verify and process input
 switch -exact $argc {
